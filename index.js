@@ -6,6 +6,11 @@ canvas.height = innerHeight;
 //setting context
 const ctx = canvas.getContext("2d");
 
+const scoreEl = document.querySelector("#scoreEl");
+const bigScoreEl = document.querySelector(".bigScoreEl");
+const startGameBtn = document.querySelector(".startGameBtn");
+const modalEl = document.querySelector(".modalEl");
+
 //creating player
 
 class Player {
@@ -108,11 +113,21 @@ const x = canvas.width / 2;
 const y = canvas.height / 2;
 
 //drawing player
-const player = new Player(x, y, 10, "white");
+let player = new Player(x, y, 10, "white");
 
-const projectiles = [];
-const enemies = [];
-const particles = [];
+let projectiles = [];
+let enemies = [];
+let particles = [];
+
+function init() {
+  player = new Player(x, y, 10, "white");
+  projectiles = [];
+  enemies = [];
+  particles = [];
+  score = 0;
+  scoreEl.innerHTML = score;
+  bigScoreEl.innerHTML = score;
+}
 
 function spawnEnemies() {
   setInterval(() => {
@@ -136,6 +151,7 @@ function spawnEnemies() {
 }
 
 let animationId;
+let score = 0;
 
 function animate() {
   animationId = requestAnimationFrame(animate);
@@ -168,6 +184,8 @@ function animate() {
     const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
     if (dist - player.radius - enemy.radius < 1) {
       cancelAnimationFrame(animationId);
+      bigScoreEl.innerHTML = score;
+      modalEl.style.display = 'flex';
     }
 
     //on collision of projectile and enemy
@@ -185,6 +203,8 @@ function animate() {
             radius: enemy.radius - 10,
           });
 
+          score += 25;
+          scoreEl.innerHTML = score;
           setTimeout(() => {
             projectiles.splice(projectileIndex, 1); //we can use splice method to remove an instance from an array splice(index , how many, ...what to add after removing)
           }, 0);
@@ -197,6 +217,8 @@ function animate() {
             enemies.splice(enemyIndex, 1);
             projectiles.splice(projectileIndex, 1); //we can use splice method to remove an instance from an array splice(index , how many, ...what to add after removing)
           }, 0);
+          score += 50;
+          scoreEl.innerHTML = score;
         }
 
         //creating explosion
@@ -240,5 +262,11 @@ window.addEventListener("click", (event) => {
     new Projectile(canvas.width / 2, canvas.height / 2, 5, "white", velocity)
   );
 });
-spawnEnemies();
-animate();
+
+startGameBtn.addEventListener('click',()=>{
+  init();
+  modalEl.style.display = 'none';
+  spawnEnemies();
+  animate();
+})
+
