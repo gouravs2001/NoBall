@@ -72,22 +72,53 @@ class Enemy {
   }
 }
 
+const friction = 0.99; //for slowing down particles
+class Particle {
+  constructor(x, y, radius, color, velocity) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.velocity = velocity;
+    this.color = color;
+    this.alpha = 1;
+  }
+
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 360, false);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  update() {
+    this.draw();
+    this.alpha -= 0.01;
+    this.velocity.x *= friction;
+    this.velocity.y *= friction;
+    this.x = this.x + this.velocity.x;
+    this.y = this.y + this.velocity.y;
+  }
+}
+
 //getting canvas center
 const x = canvas.width / 2;
 const y = canvas.height / 2;
 
 //drawing player
-const player = new Player(x, y, 20, "blue");
+const player = new Player(x, y, 10, "white");
 
-//rendering prrojectile on click event
 const projectiles = [];
 const enemies = [];
+const particles = [];
 
 function spawnEnemies() {
   setInterval(() => {
     let x, y;
     const radius = Math.random() * (30 - 5) + 5; //create value between 5 and 30
-    let color = "green";
+    let color = `hsl( ${Math.random() * 360} , 50%, 50%)`; //randomize enemy color
     if (Math.random() < 0.5) {
       x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
       y = Math.random() * canvas.height;
@@ -108,8 +139,12 @@ let animationId;
 
 function animate() {
   animationId = requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba( 0, 0, 0, 0.1 )"; // value of a in rgba set to 0.1 it creates opacity which creates light trails
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   player.draw();
+
+  //creating projectiles
+
   projectiles.forEach((projectile, projectileIndex) => {
     projectile.update();
 
@@ -125,16 +160,17 @@ function animate() {
       }
     });
   });
+
+  //on collision of player and enemy
   enemies.forEach((enemy, enemyIndex) => {
     enemy.update();
-    //detecting collision of enemy and player
 
     const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
     if (dist - player.radius - enemy.radius < 1) {
       cancelAnimationFrame(animationId);
     }
 
-    //detecting collision of projectile and eenemy
+    //on collision of projectile and enemy
     projectiles.forEach((projectile, projectileIndex) => {
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y); //calculate distance between centres of projectile and enemy
 
@@ -142,14 +178,54 @@ function animate() {
         dist - enemy.radius - projectile.radius <
         1 /*when radius collides*/
       ) {
-        setTimeout(() => {
-          //setTimeout is used for hiding flash formed because animate is trying to rerender the projectile and enemy but soon they are removed which creates a flash after we remove enemy and projectile
+        //shrinking
+        if (enemy.radius - 10 > 10) {
+          //using gsap for smooth transition of shrinking
+          gsap.to(enemy, {
+            radius: enemy.radius - 10,
+          });
 
-          enemies.splice(enemyIndex, 1);
-          projectiles.splice(projectileIndex, 1); //we can use splice method to remove an instance from an array splice(index , how many, ...what to add after removing)
-        }, 0);
+          setTimeout(() => {
+            projectiles.splice(projectileIndex, 1); //we can use splice method to remove an instance from an array splice(index , how many, ...what to add after removing)
+          }, 0);
+        }
+
+        //removing enemy
+        else {
+          //setTimeout is used for hiding flash formed because animate is trying to rerender the projectile and enemy but soon they are removed which creates a flash after we remove enemy and projectile
+          setTimeout(() => {
+            enemies.splice(enemyIndex, 1);
+            projectiles.splice(projectileIndex, 1); //we can use splice method to remove an instance from an array splice(index , how many, ...what to add after removing)
+          }, 0);
+        }
+
+        //creating explosion
+
+        for (let i = 0; i < enemy.radius; i++) {
+          particles.push(
+            new Particle(
+              projectile.x,
+              projectile.y,
+              Math.random() * 2,
+              enemy.color,
+              {
+                x: (Math.random() - 0.5) * Math.random() * 6,
+                y: (Math.random() - 0.5) * Math.random() * 6,
+              }
+            )
+          );
+        }
       }
     });
+  });
+
+  // rendering particles
+  particles.forEach((particle, particleIndex) => {
+    if (particle.alpha <= 0) {
+      particles.splice(particleIndex, 1);
+    } else {
+      particle.update();
+    }
   });
 }
 
@@ -158,10 +234,10 @@ window.addEventListener("click", (event) => {
     event.clientY - canvas.height / 2,
     event.clientX - canvas.width / 2
   ); //calculating angle of mouseClick
-  const velocity = { x: Math.cos(angle), y: Math.sin(angle) }; //calculating x and y components from angle for precise projection
+  const velocity = { x: Math.cos(angle) * 5, y: Math.sin(angle) * 5 }; //calculating x and y components from angle for precise projection
 
   projectiles.push(
-    new Projectile(canvas.width / 2, canvas.height / 2, 5, "red", velocity)
+    new Projectile(canvas.width / 2, canvas.height / 2, 5, "white", velocity)
   );
 });
 spawnEnemies();
