@@ -104,16 +104,37 @@ function spawnEnemies() {
   }, 1000);
 }
 
+let animationId;
+
 function animate() {
-  requestAnimationFrame(animate);
+  animationId = requestAnimationFrame(animate);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   player.draw();
-  projectiles.forEach((projectile) => {
+  projectiles.forEach((projectile, projectileIndex) => {
     projectile.update();
+
+    //removing offscreen projectiles
+    setTimeout(() => {
+      if (
+        projectile.x + projectile.radius < 0 ||
+        projectile.x - projectile.radius > canvas.width ||
+        projectile.y + projectile.radius < 0 ||
+        projectile.y - projectile.radius > canvas.height
+      ) {
+        projectiles.splice(projectileIndex, 1);
+      }
+    });
   });
   enemies.forEach((enemy, enemyIndex) => {
     enemy.update();
-    //detecting collision
+    //detecting collision of enemy and player
+
+    const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+    if (dist - player.radius - enemy.radius < 1) {
+      cancelAnimationFrame(animationId);
+    }
+
+    //detecting collision of projectile and eenemy
     projectiles.forEach((projectile, projectileIndex) => {
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y); //calculate distance between centres of projectile and enemy
 
