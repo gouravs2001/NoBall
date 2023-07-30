@@ -111,8 +111,24 @@ function animate() {
   projectiles.forEach((projectile) => {
     projectile.update();
   });
-  enemies.forEach((enemy) => {
+  enemies.forEach((enemy, enemyIndex) => {
     enemy.update();
+    //detecting collision
+    projectiles.forEach((projectile, projectileIndex) => {
+      const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y); //calculate distance between centres of projectile and enemy
+
+      if (
+        dist - enemy.radius - projectile.radius <
+        1 /*when radius collides*/
+      ) {
+        setTimeout(() => {
+          //setTimeout is used for hiding flash formed because animate is trying to rerender the projectile and enemy but soon they are removed which creates a flash after we remove enemy and projectile
+
+          enemies.splice(enemyIndex, 1);
+          projectiles.splice(projectileIndex, 1); //we can use splice method to remove an instance from an array splice(index , how many, ...what to add after removing)
+        }, 0);
+      }
+    });
   });
 }
 
