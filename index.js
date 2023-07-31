@@ -251,7 +251,10 @@ function animate() {
   });
 }
 
-window.addEventListener("click", (event) => {
+const events = ['click','touchstart'];
+
+events.forEach(event=>{
+window.addEventListener(event, (event) => {
   const angle = Math.atan2(
     event.clientY - canvas.height / 2,
     event.clientX - canvas.width / 2
@@ -262,11 +265,13 @@ window.addEventListener("click", (event) => {
     new Projectile(canvas.width / 2, canvas.height / 2, 5, "white", velocity)
   );
 });
+})
 
-startGameBtn.addEventListener('click',()=>{
+events.forEach(event=>{
+startGameBtn.addEventListener(event,()=>{
   init();
   modalEl.style.display = 'none';
   spawnEnemies();
   animate();
-})
+})})
 
