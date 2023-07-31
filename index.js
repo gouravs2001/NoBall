@@ -129,8 +129,9 @@ function init() {
   bigScoreEl.innerHTML = score;
 }
 
+let intervalId;
 function spawnEnemies() {
-  setInterval(() => {
+  intervalId = setInterval(() => {
     let x, y;
     const radius = Math.random() * (30 - 5) + 5; //create value between 5 and 30
     let color = `hsl( ${Math.random() * 360} , 50%, 50%)`; //randomize enemy color
@@ -184,6 +185,7 @@ function animate() {
     const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
     if (dist - player.radius - enemy.radius < 1) {
       cancelAnimationFrame(animationId);
+      clearInterval(intervalId);
       bigScoreEl.innerHTML = score;
       modalEl.style.display = 'flex';
     }
